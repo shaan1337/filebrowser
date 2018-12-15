@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"reflect"
 
-	fb "github.com/filebrowser/filebrowser"
 	"github.com/mitchellh/mapstructure"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 type modifySettingsRequest struct {

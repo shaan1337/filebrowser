@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	fb "github.com/filebrowser/filebrowser"
 	"github.com/hacdias/fileutils"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 // sanitizeURL sanitizes the URL to prevent path transversal
@@ -109,7 +109,7 @@ func listingHandler(c *fb.Context, w http.ResponseWriter, r *http.Request) (int,
 	f.Kind = "listing"
 
 	// Tries to get the listing data.
-	if err := f.GetListing(c.User, r); err != nil {
+	if err := f.GetListing(c.FileBrowser, c.User, r); err != nil {
 		return ErrorToHTTP(err, true), err
 	}
 
@@ -150,6 +150,8 @@ func resourceDeleteHandler(c *fb.Context, w http.ResponseWriter, r *http.Request
 		return ErrorToHTTP(err, true), err
 	}
 
+	c.MTAStorageManager.PathDeleted(filepath.Join(c.User.Scope, r.URL.Path))
+
 	// Fire the after trigger.
 	if err := c.Runner("after_delete", r.URL.Path, "", c.User); err != nil {
 		return http.StatusInternalServerError, err
@@ -183,6 +185,7 @@ func resourcePostPutHandler(c *fb.Context, w http.ResponseWriter, r *http.Reques
 
 		// Otherwise we try to create the directory.
 		err := c.User.FileSystem.Mkdir(r.URL.Path, 0776)
+		c.MTAStorageManager.PathAdded(filepath.Join(c.User.Scope, r.URL.Path))
 		return ErrorToHTTP(err, false), err
 	}
 
@@ -231,6 +234,8 @@ func resourcePostPutHandler(c *fb.Context, w http.ResponseWriter, r *http.Reques
 	// Writes the ETag Header.
 	etag := fmt.Sprintf(`"%x%x"`, fi.ModTime().UnixNano(), fi.Size())
 	w.Header().Set("ETag", etag)
+
+	c.MTAStorageManager.PathAdded(filepath.Join(c.User.Scope, r.URL.Path))
 
 	// Fire the after trigger.
 	if err := c.Runner("after_upload", r.URL.Path, "", c.User); err != nil {
@@ -319,6 +324,7 @@ func resourcePatchHandler(c *fb.Context, w http.ResponseWriter, r *http.Request)
 
 		// Copy the file.
 		err = c.User.FileSystem.Copy(src, dst)
+		c.MTAStorageManager.PathAdded(filepath.Join(c.User.Scope, dst))
 
 		// Fire the after trigger.
 		if err := c.Runner("after_copy", src, dst, c.User); err != nil {
@@ -332,6 +338,8 @@ func resourcePatchHandler(c *fb.Context, w http.ResponseWriter, r *http.Request)
 
 		// Rename the file.
 		err = c.User.FileSystem.Rename(src, dst)
+		c.MTAStorageManager.PathDeleted(filepath.Join(c.User.Scope, src))
+		c.MTAStorageManager.PathAdded(filepath.Join(c.User.Scope, dst))
 
 		// Fire the after trigger.
 		if err := c.Runner("after_rename", src, dst, c.User); err != nil {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	fb "github.com/filebrowser/filebrowser"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 // Handler returns a function compatible with http.HandleFunc.
@@ -165,6 +165,8 @@ func apiHandler(c *fb.Context, w http.ResponseWriter, r *http.Request) (int, err
 		code, err = settingsHandler(c, w, r)
 	case "share":
 		code, err = shareHandler(c, w, r)
+	case "space":
+		code, err = spaceHandler(c, w, r)
 	default:
 		code = http.StatusNotFound
 	}

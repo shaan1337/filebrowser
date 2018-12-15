@@ -72,24 +72,22 @@ type Listing struct {
 // GetInfo gets the file information and, in case of error, returns the
 // respective HTTP error code
 func GetInfo(url *url.URL, c *FileBrowser, u *User) (*File, error) {
-	var err error
-
 	i := &File{
 		URL:         "/files" + url.String(),
 		VirtualPath: url.Path,
 		Path:        filepath.Join(u.Scope, url.Path),
 	}
 
-	info, err := u.FileSystem.Stat(url.Path)
+	info, err := c.MTAStorageManager.GetFileInfo(filepath.Join(u.Scope, url.Path))
 	if err != nil {
 		return i, err
 	}
 
-	i.Name = info.Name()
-	i.ModTime = info.ModTime()
-	i.Mode = info.Mode()
-	i.IsDir = info.IsDir()
-	i.Size = info.Size()
+	i.Name = info.Name
+	i.ModTime = info.ModTime
+	i.Mode = info.Mode
+	i.IsDir = info.IsDir
+	i.Size = info.Size
 	i.Extension = filepath.Ext(i.Name)
 
 	if i.IsDir && !strings.HasSuffix(i.URL, "/") {
@@ -100,17 +98,8 @@ func GetInfo(url *url.URL, c *FileBrowser, u *User) (*File, error) {
 }
 
 // GetListing gets the information about a specific directory and its files.
-func (i *File) GetListing(u *User, r *http.Request) error {
-	// Gets the directory information using the Virtual File System of
-	// the user configuration.
-	f, err := u.FileSystem.OpenFile(i.VirtualPath, os.O_RDONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	// Reads the directory and gets the information about the files.
-	files, err := f.Readdir(-1)
+func (i *File) GetListing(c *FileBrowser, u *User, r *http.Request) error {
+	dirListing, err := c.MTAStorageManager.GetDirectoryListing(filepath.Join(u.Scope, i.VirtualPath), false)
 	if err != nil {
 		return err
 	}
@@ -125,39 +114,29 @@ func (i *File) GetListing(u *User, r *http.Request) error {
 		return err
 	}
 
-	for _, f := range files {
-		name := f.Name()
+	for _, f := range dirListing.Items {
+		name := f.Name
 		allowed := u.Allowed("/" + name)
 
 		if !allowed {
 			continue
 		}
 
-		if strings.HasPrefix(f.Mode().String(), "L") {
-			// It's a symbolic link. We try to follow it. If it doesn't work,
-			// we stay with the link information instead if the target's.
-			info, err := os.Stat(f.Name())
-			if err == nil {
-				f = info
-			}
-		}
-
-		if f.IsDir() {
+		if f.IsDir {
 			name += "/"
 			dirCount++
 		} else {
 			fileCount++
 		}
-
 		// Absolute URL
 		url := url.URL{Path: baseurl + name}
 
 		i := &File{
-			Name:        f.Name(),
-			Size:        f.Size(),
-			ModTime:     f.ModTime(),
-			Mode:        f.Mode(),
-			IsDir:       f.IsDir(),
+			Name:        f.Name,
+			Size:        f.Size,
+			ModTime:     f.ModTime,
+			Mode:        f.Mode,
+			IsDir:       f.IsDir,
 			URL:         url.String(),
 			Extension:   filepath.Ext(name),
 			VirtualPath: filepath.Join(i.VirtualPath, name),
@@ -175,6 +154,62 @@ func (i *File) GetListing(u *User, r *http.Request) error {
 	}
 
 	return nil
+}
+
+// GetFullListing gets the information about a specific directory and its files, including subdirectories
+func (i *File) GetFullListing(c *FileBrowser, u *User, r *http.Request) (*Listing, error) {
+
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		return nil, nil
+	}
+	dirListing, err := c.MTAStorageManager.GetDirectoryListing(filepath.Join(u.Scope, path), true)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		fileinfos           []*File
+		dirCount, fileCount int
+	)
+
+	for _, f := range dirListing.Items {
+		name := f.Name
+		allowed := u.Allowed("/" + name)
+
+		if !allowed {
+			continue
+		}
+
+		if f.IsDir {
+			name += "/"
+			dirCount++
+		} else {
+			fileCount++
+		}
+
+		scope := u.Scope
+		i := &File{
+			Name:        f.Name,
+			Size:        f.Size,
+			ModTime:     f.ModTime,
+			Mode:        f.Mode,
+			IsDir:       f.IsDir,
+			Extension:   filepath.Ext(name),
+			VirtualPath: f.Path[len(scope):],
+			Path:        f.Path,
+		}
+		i.GetFileType(false)
+		fileinfos = append(fileinfos, i)
+	}
+
+	listing := &Listing{
+		Items:    fileinfos,
+		NumDirs:  dirCount,
+		NumFiles: fileCount,
+	}
+
+	return listing, nil
 }
 
 // GetEditor gets the editor based on a Info struct

@@ -3,11 +3,11 @@ package filemanager
 import (
 	"net/http"
 
-	"github.com/filebrowser/filebrowser"
-	"github.com/filebrowser/filebrowser/caddy/parser"
-	h "github.com/filebrowser/filebrowser/http"
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/shaan1337/filebrowser"
+	"github.com/shaan1337/filebrowser/caddy/parser"
+	h "github.com/shaan1337/filebrowser/http"
 )
 
 func init() {

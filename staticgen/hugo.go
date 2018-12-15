@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	fb "github.com/filebrowser/filebrowser"
 	"github.com/hacdias/varutils"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 var (

@@ -9,7 +9,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
-	fb "github.com/filebrowser/filebrowser"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 const reCaptchaAPI = "/recaptcha/api/siteverify"

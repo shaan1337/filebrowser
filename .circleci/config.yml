@@ -3,7 +3,7 @@ jobs:
   linting:
     docker:
       - image: circleci/golang:1.10
-    working_directory: /go/src/github.com/filebrowser/filebrowser
+    working_directory: /go/src/github.com/shaan1337/filebrowser
     steps:
       - checkout
       - run:
@@ -28,7 +28,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.10
-    working_directory: /go/src/github.com/filebrowser/filebrowser
+    working_directory: /go/src/github.com/shaan1337/filebrowser
     steps:
       - checkout
       - run:
@@ -39,11 +39,11 @@ jobs:
             dep ensure -v
       - run:
           name: Building
-          command: go build github.com/filebrowser/filebrowser/cmd/filebrowser
+          command: go build github.com/shaan1337/filebrowser/cmd/filebrowser
   deploy:
     docker:
       - image: circleci/golang:1.10
-    working_directory: /go/src/github.com/filebrowser/filebrowser
+    working_directory: /go/src/github.com/shaan1337/filebrowser
     steps:
       - checkout
       - run:

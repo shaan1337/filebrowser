@@ -14,37 +14,40 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/filebrowser/filebrowser"
-	"github.com/filebrowser/filebrowser/bolt"
-	h "github.com/filebrowser/filebrowser/http"
-	"github.com/filebrowser/filebrowser/staticgen"
 	"github.com/hacdias/fileutils"
+	"github.com/shaan1337/filebrowser"
+	"github.com/shaan1337/filebrowser/bolt"
+	h "github.com/shaan1337/filebrowser/http"
+	"github.com/shaan1337/filebrowser/staticgen"
+	"github.com/shaan1337/mtamu_storage_manager"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 var (
-	addr            string
-	config          string
-	database        string
-	scope           string
-	commands        string
-	logfile         string
-	staticg         string
-	locale          string
-	baseurl         string
-	prefixurl       string
-	viewMode        string
-	recaptchakey    string
-	recaptchasecret string
-	port            int
-	noAuth          bool
-	allowCommands   bool
-	allowEdit       bool
-	allowNew        bool
-	allowPublish    bool
-	showVer         bool
-	alterRecaptcha  bool
+	addr                  string
+	config                string
+	database              string
+	scope                 string
+	commands              string
+	logfile               string
+	staticg               string
+	locale                string
+	baseurl               string
+	prefixurl             string
+	viewMode              string
+	recaptchakey          string
+	recaptchasecret       string
+	port                  int
+	noAuth                bool
+	allowCommands         bool
+	allowEdit             bool
+	allowNew              bool
+	allowPublish          bool
+	showVer               bool
+	alterRecaptcha        bool
+	fileScanIntervalSecs  int
+	indexScanIntervalSecs int
 )
 
 func init() {
@@ -69,6 +72,8 @@ func init() {
 	flag.StringVar(&locale, "locale", "", "Default locale for new users, set it empty to enable auto detect from browser")
 	flag.StringVar(&staticg, "staticgen", "", "Static Generator you want to enable")
 	flag.BoolVarP(&showVer, "version", "v", false, "Show version")
+	flag.IntVar(&fileScanIntervalSecs, "file-scan-interval", 300, "Scope directory scan interval in seconds")
+	flag.IntVar(&indexScanIntervalSecs, "index-scan-interval", 300, "Index scan interval in seconds")
 }
 
 func setupViper() {
@@ -91,6 +96,8 @@ func setupViper() {
 	viper.SetDefault("AlternativeRecaptcha", false)
 	viper.SetDefault("ReCaptchaKey", "")
 	viper.SetDefault("ReCaptchaSecret", "")
+	viper.SetDefault("FileScanIntervalSecs", 300)
+	viper.SetDefault("IndexScanIntervalSecs", 300)
 
 	viper.BindPFlag("Port", flag.Lookup("port"))
 	viper.BindPFlag("Address", flag.Lookup("address"))
@@ -111,7 +118,8 @@ func setupViper() {
 	viper.BindPFlag("AlternativeRecaptcha", flag.Lookup("alternative-recaptcha"))
 	viper.BindPFlag("ReCaptchaKey", flag.Lookup("recaptcha-key"))
 	viper.BindPFlag("ReCaptchaSecret", flag.Lookup("recaptcha-secret"))
-
+	viper.BindPFlag("FileScanIntervalSecs", flag.Lookup("file-scan-interval"))
+	viper.BindPFlag("IndexScanIntervalSecs", flag.Lookup("index-scan-interval"))
 	viper.SetConfigName("filebrowser")
 	viper.AddConfigPath(".")
 }
@@ -195,6 +203,14 @@ func handler() http.Handler {
 		recaptchaHost = "https://recaptcha.net"
 	}
 
+	mtaStorageManager := &mta.MTAStorageManager{
+		Scope:                 viper.GetString("scope"),
+		FileScanIntervalSecs:  viper.GetInt("FileScanIntervalSecs"),
+		IndexScanIntervalSecs: viper.GetInt("IndexScanIntervalSecs"),
+	}
+
+	mtaStorageManager.Init()
+
 	fm := &filebrowser.FileBrowser{
 		NoAuth:          viper.GetBool("NoAuth"),
 		BaseURL:         viper.GetString("BaseURL"),
@@ -223,6 +239,7 @@ func handler() http.Handler {
 		NewFS: func(scope string) filebrowser.FileSystem {
 			return fileutils.Dir(scope)
 		},
+		MTAStorageManager: mtaStorageManager,
 	}
 
 	err = fm.Setup()

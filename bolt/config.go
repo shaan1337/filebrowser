@@ -2,7 +2,7 @@ package bolt
 
 import (
 	"github.com/asdine/storm"
-	fb "github.com/filebrowser/filebrowser"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 // ConfigStore is a configuration store.

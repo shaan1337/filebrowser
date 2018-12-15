@@ -19,6 +19,7 @@ import (
 	"github.com/hacdias/fileutils"
 	"github.com/mholt/caddy"
 	"github.com/robfig/cron"
+	mta "github.com/shaan1337/mtamu_storage_manager"
 )
 
 const (
@@ -90,6 +91,9 @@ type FileBrowser struct {
 
 	// NewFS should build a new file system for a given path.
 	NewFS FSBuilder
+
+	//MTA Storage Manager
+	MTAStorageManager *mta.MTAStorageManager
 }
 
 var commandEvents = []string{

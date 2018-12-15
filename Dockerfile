@@ -1,14 +1,14 @@
 FROM golang:alpine
 
-COPY . /go/src/github.com/filebrowser/filebrowser
+COPY . /go/src/github.com/shaan1337/filebrowser
 
-WORKDIR /go/src/github.com/filebrowser/filebrowser
+WORKDIR /go/src/github.com/shaan1337/filebrowser
 RUN apk add --no-cache git curl && \
   curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && \
   chmod +x /usr/local/bin/dep
 RUN dep ensure -vendor-only
 
-WORKDIR /go/src/github.com/filebrowser/filebrowser/cmd/filebrowser
+WORKDIR /go/src/github.com/shaan1337/filebrowser/cmd/filebrowser
 RUN CGO_ENABLED=0 go build -a
 RUN mv filebrowser /go/bin/filebrowser
 

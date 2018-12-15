@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	"github.com/asdine/storm"
-	"github.com/filebrowser/filebrowser"
-	"github.com/filebrowser/filebrowser/bolt"
-	"github.com/filebrowser/filebrowser/staticgen"
 	"github.com/hacdias/fileutils"
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/shaan1337/filebrowser"
+	"github.com/shaan1337/filebrowser/bolt"
+	"github.com/shaan1337/filebrowser/staticgen"
 )
 
 var databases = map[string]*storm.DB{}

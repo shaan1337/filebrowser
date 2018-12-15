@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	fb "github.com/filebrowser/filebrowser"
 	"github.com/hacdias/fileutils"
 	"github.com/mholt/archiver"
+	fb "github.com/shaan1337/filebrowser"
 )
 
 // downloadHandler creates an archive in one of the supported formats (zip, tar,
